@@ -107,3 +107,130 @@ zen-folder .tab-group-label {
         transform: translateX(0) rotate(90deg) !important;
     }
 }
+
+/* === Even Better New Tab Button: sticky extension === */
+@media (-moz-pref("btrnewtab.sticky")) {
+    #tabbrowser-tabs {
+        --btrnewtab-button-block-margin:
+            var(--tab-margin-block, var(--tab-block-margin, 2px));
+        --btrnewtab-button-height: var(--tab-min-height, 36px);
+    }
+
+    #zen-tabs-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #tabbrowser-arrowscrollbox {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    #tabs-newtab-button {
+        display: none !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1 {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        z-index: 1;
+        min-height: var(--btrnewtab-button-height) !important;
+        background: transparent !important;
+        transition: transform 0.1s ease-out !important;
+        margin-block: var(--btrnewtab-button-block-margin) !important;
+        overflow: hidden !important;
+    }
+
+    :root[zen-sidebar-expanded="true"] #vertical-tabs-newtab-button.toolbarbutton-1 {
+        margin-inline: 4px !important;
+        width: auto !important;
+    }
+
+    :root:not([zen-sidebar-expanded="true"]) #vertical-tabs-newtab-button.toolbarbutton-1 {
+        margin-inline: auto !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1 .toolbarbutton-text,
+    #vertical-tabs-newtab-button.toolbarbutton-1 .toolbarbutton-icon + .toolbarbutton-text {
+        display: none !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1:hover {
+        background: var(--toolbarbutton-hover-background) !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1:is(:active, [open], [checked]) {
+        background: var(--toolbarbutton-active-background) !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1:is(:hover, :active, [open], [checked])
+    :is(.toolbarbutton-icon, .toolbarbutton-text) {
+        background: transparent !important;
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1:hover:active,
+    #vertical-tabs-newtab-button.toolbarbutton-1:active {
+        transform: scale(0.95) !important;
+    }
+
+    @media (-moz-pref("btrnewtab.enable-border-radius")) {
+        #vertical-tabs-newtab-button.toolbarbutton-1 {
+            border-radius: var(--btrnewtab-border-radius) !important;
+        }
+    }
+
+    #vertical-tabs-newtab-button.toolbarbutton-1 .toolbarbutton-icon {
+        transition: transform 0.15s ease-in-out !important;
+        transform: translateX(0) rotate(0deg) !important;
+    }
+
+    @media (-moz-pref("btrnewtab.plusanim")) {
+        #vertical-tabs-newtab-button.toolbarbutton-1:active .toolbarbutton-icon {
+            transform: translateX(0) rotate(90deg) !important;
+        }
+    }
+
+    @media (-moz-pref("zen.view.show-newtab-button-top")) {
+        #tabbrowser-arrowscrollbox > zen-workspace[active="true"] >
+        arrowscrollbox.workspace-arrowscrollbox {
+            overflow-y: hidden !important;
+            flex-basis: 100% !important;
+        }
+
+        #tabbrowser-arrowscrollbox > zen-workspace[active="true"]
+        .zen-workspace-pinned-tabs-section {
+            flex: 0 1 0 !important;
+        }
+
+        #tabbrowser-arrowscrollbox > zen-workspace[active="true"]
+        .zen-workspace-normal-tabs-section {
+            anchor-name: --btrnewtab-active-normal;
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            margin-block-start:
+                calc(var(--btrnewtab-button-height) +
+                    2 * var(--btrnewtab-button-block-margin)) !important;
+        }
+
+        #vertical-tabs-newtab-button.toolbarbutton-1 {
+            position: absolute !important;
+            position-anchor: --btrnewtab-active-normal;
+            top: auto !important;
+            bottom: anchor(top) !important;
+            inset-inline-start: anchor(start) !important;
+            inset-inline-end: anchor(end) !important;
+            order: 0 !important;
+        }
+
+        :root:not([zen-sidebar-expanded="true"])
+        #vertical-tabs-newtab-button.toolbarbutton-1 {
+            inset-inline: auto !important;
+            inset-inline-start: anchor(center) !important;
+            translate: -50% 0 !important;
+        }
+    }
+}

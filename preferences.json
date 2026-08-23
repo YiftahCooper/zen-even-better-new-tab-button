@@ -64,5 +64,11 @@
         }
       }
     ]
+  },
+  {
+    "type": "checkbox",
+    "property": "btrnewtab.sticky",
+    "label": "Keep the New Tab button visible while tabs scroll",
+    "defaultValue": true
   }
 ]

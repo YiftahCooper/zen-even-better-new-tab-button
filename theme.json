@@ -1,7 +1,11 @@
 {
-  "id": "bada16c1-3b14-483b",
-  "name": "Better New Tab button",
-  "version": "1.0.8",
-  "description": "A Zen Browser mod that enhances the New Tab button experience",
-  "ai": "yes"
+  "id": "7f126d94-71d0-4c21-9de6-64f933edf185",
+  "name": "Even Better New Tab Button",
+  "version": "1.0.2",
+  "description": "Keeps Zen's New Tab button visible while vertical tabs scroll",
+  "homepage": "https://github.com/YiftahCooper/zen-even-better-new-tab-button",
+  "ai": "yes",
+  "style": {
+    "chrome": "userChrome.css"
+  }
 }

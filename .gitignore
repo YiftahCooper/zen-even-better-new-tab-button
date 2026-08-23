@@ -1,0 +1,5 @@
+.tmp/
+Errors/
+verification/
+__pycache__/
+*.py[cod]
