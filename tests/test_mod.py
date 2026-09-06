@@ -343,7 +343,7 @@ class ExternalButtonCssContractTests(unittest.TestCase):
         )
         self.assertIsNotNone(hover_rule)
         self.assertIn(
-            "background: var(--toolbarbutton-hover-background) !important",
+            "var(--toolbarbutton-background-color-hover, var(--toolbarbutton-hover-background)) !important",
             hover_rule.group(1),
         )
 
@@ -354,7 +354,7 @@ class ExternalButtonCssContractTests(unittest.TestCase):
         )
         self.assertIsNotNone(active_rule)
         self.assertIn(
-            "background: var(--toolbarbutton-active-background) !important",
+            "var(--toolbarbutton-background-color-active, var(--toolbarbutton-active-background)) !important",
             active_rule.group(1),
         )
 
@@ -459,7 +459,7 @@ class MetadataContractTests(unittest.TestCase):
         self.assertEqual(theme["id"], "7f126d94-71d0-4c21-9de6-64f933edf185")
         self.assertNotEqual(theme["id"], "bada16c1-3b14-483b")
         self.assertEqual(theme["name"], "Even Better New Tab Button")
-        self.assertEqual(theme["version"], "1.0.2")
+        self.assertEqual(theme["version"], "1.0.3")
         self.assertEqual(
             theme["homepage"],
             "https://github.com/YiftahCooper/zen-even-better-new-tab-button",

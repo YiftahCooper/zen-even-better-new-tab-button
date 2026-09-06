@@ -159,11 +159,11 @@ zen-folder .tab-group-label {
     }
 
     #vertical-tabs-newtab-button.toolbarbutton-1:hover {
-        background: var(--toolbarbutton-hover-background) !important;
+        background: var(--toolbarbutton-background-color-hover, var(--toolbarbutton-hover-background)) !important;
     }
 
     #vertical-tabs-newtab-button.toolbarbutton-1:is(:active, [open], [checked]) {
-        background: var(--toolbarbutton-active-background) !important;
+        background: var(--toolbarbutton-background-color-active, var(--toolbarbutton-active-background)) !important;
     }
 
     #vertical-tabs-newtab-button.toolbarbutton-1:is(:hover, :active, [open], [checked])

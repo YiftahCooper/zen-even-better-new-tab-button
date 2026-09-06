@@ -1,7 +1,7 @@
 {
   "id": "7f126d94-71d0-4c21-9de6-64f933edf185",
   "name": "Even Better New Tab Button",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Keeps Zen's New Tab button visible while vertical tabs scroll",
   "homepage": "https://github.com/YiftahCooper/zen-even-better-new-tab-button",
   "ai": "yes",

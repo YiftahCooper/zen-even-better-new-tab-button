@@ -1,6 +1,35 @@
 # Verification record
 
-## Current decision: version 1.0.2
+## Current candidate: version 1.0.3
+
+Version `1.0.3` restores the sticky button's native hover and pressed backgrounds
+on Zen `1.22b` (Firefox `155.0.1`, build `20260904060728`). It uses
+`--toolbarbutton-background-color-hover` and
+`--toolbarbutton-background-color-active`, with the previous variable names as
+fallbacks. No layout or animation declarations were changed.
+
+On 2026-09-06, the previous rules reproduced fully transparent backgrounds
+during actual WebDriver pointer hover and press in a disposable headless Zen
+profile. With the candidate stylesheet registered as a user stylesheet, the
+background matched Zen's native color values in light and dark color schemes,
+with both expanded and collapsed sidebar attributes. Native opacity was 7% on
+hover and 10% while pressed. Resting appearance remained transparent; press
+scale was 0.95 and plus rotation was 90 degrees, resetting to 1 and 0 degrees
+on release.
+
+The legacy fallback also passed with the new tokens unset and only the old
+tokens supplied in the current engine (an emulation, not an old-version browser
+test). Disabling the plus-animation preference kept rotation at zero while the
+press scale and both highlights continued to work. All 12 static tests passed.
+Candidate CSS SHA-256:
+`53BD14007CA690CDDD531DD89B941F4C92A819934A014D0EB6C7870652C89080`.
+
+This is an engine-level interaction check, not a new Sine installation test or
+a visual check in the user's profile. The top-placement requirement and known
+bottom-placement limitation below continue to apply. The earlier release's
+CSS hashes below describe that release, not this candidate.
+
+## Previous decision: version 1.0.2
 
 Version `1.0.2` corrects the Zen `1.21.15b` top-placement layout regression.
 Sticky mode is qualified only with Zen's **Move New Tab button to top** setting
