@@ -202,14 +202,17 @@ zen-folder .tab-group-label {
 
         #tabbrowser-arrowscrollbox > zen-workspace[active="true"]
         .zen-workspace-pinned-tabs-section {
-            flex: 0 1 0 !important;
+            flex: 0 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
         }
 
         #tabbrowser-arrowscrollbox > zen-workspace[active="true"]
         .zen-workspace-normal-tabs-section {
             anchor-name: --btrnewtab-active-normal;
             flex: 1 1 0 !important;
-            min-height: 0 !important;
+            /* Preserve a usable ordinary-tab viewport below tall pinned content. */
+            min-height: calc(2 * (var(--tab-min-height, 36px) + 2 * var(--tab-margin-block, var(--tab-block-margin, 2px)))) !important;
             overflow-y: auto !important;
             margin-block-start:
                 calc(var(--btrnewtab-button-height) +

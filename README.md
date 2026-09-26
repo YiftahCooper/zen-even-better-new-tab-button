@@ -9,6 +9,9 @@ states.
 > Sticky mode currently works only when Zen's built-in
 > **Move New Tab button to top** setting is enabled. Bottom placement is not
 > currently supported.
+>
+> Version 1.0.4 also requires Sine to load the included JavaScript module.
+> For a repository install, see the JavaScript permission step below.
 
 <p align="center">
   <img src="assets/sticky-demo.gif" width="260" alt="Zen vertical tabs scrolling beneath a fixed New Tab button while the plus icon rotates and presses">
@@ -23,7 +26,10 @@ states.
   behavior.
 - Preserves the optional 90-degree plus rotation and pressed-scale animation.
 - Works with expanded and collapsed sidebars when top placement is enabled.
-- Keeps pinned tabs fixed above the button in sticky top mode.
+- Keeps the pinned section above the button, with its own scrolling when tall
+  pinned folders would otherwise crowd out ordinary tabs.
+- Reserves a minimum ordinary-tab viewport of two native row pitches and
+  reveals selected/focused tabs when navigating with the keyboard.
 - Restores upstream scrolling and the original inner button when sticky mode is
   disabled.
 - Retains the upstream New Tab, tab, and folder corner-radius preferences.
@@ -37,28 +43,49 @@ states.
    https://github.com/YiftahCooper/zen-even-better-new-tab-button
    ```
 
-3. In the mod's Sine preferences, enable **Keep the New Tab button visible
+3. For a repository install, Sine must permit the included JavaScript. Its
+   setting is **Enable installing JS from unofficial sources. (unsafe, use at
+   your own risk)**. This is a Sine-wide trust setting, not a permission limited
+   to this mod; enable it only if you trust the unofficial mods you install.
+4. In the mod's Sine preferences, enable **Keep the New Tab button visible
    while tabs scroll**.
-4. Restart Zen after installing or updating the mod so Sine loads the current
-   stylesheet.
+5. Restart Zen after installing or updating the mod so Sine loads the current
+   stylesheet and `newtab-layout.uc.mjs`.
 
 The animation and corner-radius options can be changed independently in the
 same Sine preferences panel.
 
-## Compatibility and known limitation
+The small JavaScript module supplies a Gecko shadow-slot sizing rule and
+keyboard/drag-edge scrolling support. Its behavior is enabled only for vertical
+tabs with sticky mode and top placement enabled. It does not write preferences,
+create or move tabs, replace native tab methods, or make network requests. Sine
+unloading removes its style and releases its input listeners. CSS alone is not
+the complete tall-folder repair; if the module cannot load, disable sticky mode.
 
-Version `1.0.2` was exercised through Sine's installed stylesheet path in Zen
-`1.21.15b` (Firefox `154.0`) with Sine `2.3.3.0`. Top placement passed expanded
-and collapsed sidebar checks, kept the button at the same measured vertical
-position throughout tab scrolling, and retained the pointer-driven press and
-plus-rotation animations. The mod has also been confirmed to function in a
-normal browser profile with top placement enabled.
+## Compatibility and known limitations
+
+Version `1.0.4` repairs ordinary tabs becoming unreachable below tall expanded
+pinned folders. The repair was tested on Zen `1.22.3b` (Gecko `156.0.1`) with
+Sine `2.3.4.1c`, including expanded/collapsed sidebars, native New Tab actions,
+press/plus animations, independent scrolling, keyboard reveal and Sine unload/
+reload. A temporary trial in a normal browser window was also confirmed to fix
+the original problem. That trial was memory-only, not a persistent installation.
+
+**SuperPins 1.7.2:** its **stay-at-top** feature can independently cause the same
+zero-height ordinary-tab problem. Updating this mod does not update SuperPins.
+Disable that feature, or use a separately repaired SuperPins version. Testing
+with both repaired candidates does not establish compatibility with unmodified
+SuperPins 1.7.2.
 
 Sticky bottom placement is unsupported. When **Move New Tab button to top** is
 disabled, ordinary tabs can extend into the New Tab row instead of reserving
 space for it. This was reproduced in a clean Sine-only profile and independently
 confirmed in a normal browser profile. Disable sticky mode or enable Zen's top
 placement setting to avoid the overlap.
+
+Very short windows with many Essentials can still leave too little room for
+the tab sections and clip the button. That case remains unresolved; this mod
+does not resize or add a scroller to Essentials.
 
 Zen's browser chrome is not a stable extension API, so compatibility with every
 future Zen release cannot be guaranteed. See [VERIFICATION.md](VERIFICATION.md)
@@ -75,12 +102,16 @@ byte-for-byte from upstream commit
 - Upstream Zen Discord thread:
   <https://discord.com/channels/1088172780480114748/1404796233591296081>
 
-## Static tests
+## Tests
 
 ```powershell
 python -m unittest discover -s tests -v
+node --test tests/runtime.test.mjs
 ```
 
 The tests bind the preserved upstream CSS and preferences, validate the mod
 metadata and sticky preference, and constrain the extension to the selected Zen
-controls. Static tests complement rather than replace live Zen and Sine testing.
+controls. The Node tests execute the shipped runtime against browser API
+fixtures to check preference gates, selection reveal, drag scrolling and unload
+ownership. They do not simulate Gecko layout. Both suites complement rather
+than replace live Zen and Sine testing.

@@ -215,7 +215,11 @@ class ExternalButtonCssContractTests(unittest.TestCase):
         self.assertIsNotNone(normal_tabs)
         self.assertIn("anchor-name: --btrnewtab-active-normal", normal_tabs.group(1))
         self.assertIn("flex: 1 1 0 !important", normal_tabs.group(1))
-        self.assertIn("min-height: 0 !important", normal_tabs.group(1))
+        self.assertIn(
+            "min-height: calc(2 * (var(--tab-min-height, 36px) + 2 * "
+            "var(--tab-margin-block, var(--tab-block-margin, 2px)))) !important",
+            normal_tabs.group(1),
+        )
         self.assertIn("overflow-y: auto !important", normal_tabs.group(1))
         self.assertRegex(
             normal_tabs.group(1),
@@ -241,7 +245,9 @@ class ExternalButtonCssContractTests(unittest.TestCase):
             re.DOTALL,
         )
         self.assertIsNotNone(pinned_tabs)
-        self.assertIn("flex: 0 1 0 !important", pinned_tabs.group(1))
+        self.assertIn("flex: 0 1 auto !important", pinned_tabs.group(1))
+        self.assertIn("min-height: 0 !important", pinned_tabs.group(1))
+        self.assertIn("overflow-y: auto !important", pinned_tabs.group(1))
 
         external_button = re.search(
             r'#vertical-tabs-newtab-button\.toolbarbutton-1\s*\{([^{}]*)\}',
@@ -459,13 +465,23 @@ class MetadataContractTests(unittest.TestCase):
         self.assertEqual(theme["id"], "7f126d94-71d0-4c21-9de6-64f933edf185")
         self.assertNotEqual(theme["id"], "bada16c1-3b14-483b")
         self.assertEqual(theme["name"], "Even Better New Tab Button")
-        self.assertEqual(theme["version"], "1.0.3")
+        self.assertEqual(theme["version"], "1.0.4")
         self.assertEqual(
             theme["homepage"],
             "https://github.com/YiftahCooper/zen-even-better-new-tab-button",
         )
         self.assertEqual(theme["style"], {"chrome": "userChrome.css"})
         self.assertEqual(theme["ai"], "yes")
+
+    def test_sine_loads_the_layout_runtime_only_in_browser_windows(self):
+        theme = read_json(THEME_PATH)
+        self.assertEqual(theme.get("scripts"), {
+            "newtab-layout.uc.mjs": {
+                "include": ["chrome://browser/content/browser.xhtml"]
+            }
+        })
+        self.assertIs(theme.get("supportsUnload"), True)
+        self.assertTrue((ROOT / "newtab-layout.uc.mjs").is_file())
 
 
 if __name__ == "__main__":

@@ -1,6 +1,68 @@
 # Verification record
 
-## Current candidate: version 1.0.3
+## Current candidate: version 1.0.4
+
+### Tall pinned-folder repair (2026-09-27)
+
+Tested environment: Zen `1.22.3b`, Gecko `156.0.1`, Sine `2.3.4.1c`.
+The original sticky-top layout could shrink the ordinary-tab viewport to zero
+when pinned folders were tall. SuperPins 1.7.2's stay-at-top feature reproduced
+the same failure independently; this release changes only this mod.
+
+The pinned section now keeps its natural flex basis but can shrink and scroll.
+The ordinary section reserves two native row pitches (80 CSS pixels in the
+tested density). A preference-gated author-origin style allows Gecko's shadow
+`items-wrapper` to shrink. The equivalent user-origin rule did not work in the
+tested engine. The runtime also restores selected/focused-tab reveal and pinned
+drag-edge scrolling without replacing native selection or drop handlers.
+Its reference-counted `__zenSectionScrollRepair` owner protocol permits a
+separately repaired mod to share one set of listeners.
+
+### Retained native-browser evidence
+
+The following results come from the pre-publication investigation, not from the
+Node fixture tests. The integrated runtime and CSS extension match that accepted
+candidate after line-ending normalization; the preserved upstream CSS prefix
+remains independently hash-checked.
+
+| Check | Result and boundary |
+| --- | --- |
+| Layout matrix | 24/24 cases passed: each repaired mod alone and both load orders, three requested window heights, expanded/collapsed sidebars, reachable section endpoints and stable button position. |
+| Sine lifecycle | Disable/re-enable, repeated rebuild, preference gates and workspace switching passed. No styles/owners remained after both modules unloaded. |
+| Cold start in disposable profile | Both registered modules loaded automatically and the shadow slot could shrink. This was not a restart of a permanently patched everyday profile. |
+| Visible pointer and keyboard checks | 6/6 passed: independent wheel scrolling, both native New Tab action modes, press scale 0.95, plus rotation 90 degrees and keyboard reveal. |
+| Native long press | Opened Zen's container menu. |
+| Manual reorder | User gestures produced four trusted drop events, changed ordering and preserved the synthetic fixture tabs. The automated drag/drop harness delivered no drops even in the no-mod control; it is not counted as passing. |
+| Normal-profile temporary trial | Ordinary viewport changed from 0 to 80 CSS pixels. Tab identities, folder states and checked preferences were preserved. The user confirmed that the original problem was fixed and behavior correct. This trial applied both repairs in memory; no permanent profile installation is claimed. |
+
+The earlier headless runs needed a content-sandbox override confined to the
+owned disposable launch. Later visible desktop tests and the normal-profile
+memory trial supplied separate evidence; headless results alone are not normal
+browser acceptance. Raw captures, profile metadata, tab identifiers and local
+paths remain private and are not part of the public package.
+
+### Release checks and remaining limits
+
+- 13 Python contract tests pass, including upstream preservation, current
+  hover/pressed tokens, animations and Sine script registration. The changed
+  layout and registration checks first failed against the previous package.
+- 9 Node runtime tests pass: repeated load/unload, window-unload fallback,
+  preference gating, selection/focus reveal, inactive/disconnected targets,
+  drag-edge scrolling/cancellation and shared-owner unload order. These use
+  browser API fixtures, not a Gecko rendering engine.
+- JavaScript syntax and Git whitespace checks pass.
+- No preference schema changes, native-method patches, mutation observers,
+  extra Essentials sizing or network access were added.
+- Top placement is still required. Bottom placement remains unsupported.
+- With 12 Essentials and a requested height of 400 px (495 px actual content
+  height), the pinned viewport could still collapse and the button clip.
+  This adverse case remains unresolved and is outside the accepted practical
+  window-size condition. The abandoned Essentials-sizing experiment is excluded.
+- Updating only this mod cannot repair unmodified SuperPins 1.7.2's independent
+  stay-at-top defect. The combined passing cases used both repaired candidates.
+- Publishing this package does not install it into any running browser profile.
+
+## Previous candidate: version 1.0.3
 
 Version `1.0.3` restores the sticky button's native hover and pressed backgrounds
 on Zen `1.22b` (Firefox `155.0.1`, build `20260904060728`). It uses
