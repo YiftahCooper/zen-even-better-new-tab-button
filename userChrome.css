@@ -144,6 +144,11 @@ zen-folder .tab-group-label {
         overflow: hidden !important;
     }
 
+    /* Removed synchronously after forcing a stale startup frame to rebuild. */
+    #vertical-tabs-newtab-button.toolbarbutton-1[btrnewtab-rebuild-frame] {
+        display: none !important;
+    }
+
     :root[zen-sidebar-expanded="true"] #vertical-tabs-newtab-button.toolbarbutton-1 {
         margin-inline: 4px !important;
         width: auto !important;

@@ -1,6 +1,61 @@
 # Verification record
 
-## Current candidate: version 1.0.4
+## Current candidate: version 1.0.5
+
+### Startup anchor recovery (2026-10-20)
+
+On Zen `1.23.3b` / Gecko `158.0`, the normal browser reproduced the startup
+failure twice: the external New Tab button started at `338px`, while its
+correct slot began at `458px`. The pinned section occupied `336–456px`; the
+ordinary section began at `496px`. The error was exactly the pinned section's
+`120px` height, despite Zen reporting startup complete and the button naming
+the correct ordinary-section anchor.
+
+Updating Better Zen Folders reloaded Sine's styles and corrected the position,
+but another restart reproduced the failure with Better Zen Folders `0.3.24`.
+Resetting the anchor name did not correct it. A temporary, window-local user
+rule that removed and reconstructed only the button's frame changed its top
+from `338px` to `458px`, without reloading Sine or changing the tab layout.
+The live evidence establishes stale anchor geometry and a successful frame
+reconstruction workaround; it does not identify a particular Gecko source bug
+or prove that every startup/mod combination is affected.
+
+The runtime now waits for Zen's startup promise (or the workspace startup
+promise on older Zen), lets two animation frames settle, and compares the
+button with the current ordinary-section boundary. Only an error greater than
+one CSS pixel triggers a synchronous frame reconstruction through a temporary
+mod-owned attribute. The attribute is removed in `finally`. The runtime skips
+disabled sticky/top/vertical settings, hidden or focused buttons, and cancels
+pending startup work on unload. It does not reload other mods, move the button
+in the DOM, write preferences or save a geometry offset.
+
+### Verification
+
+- `python -m unittest discover -s tests -v`: 13 tests pass.
+- `node --test tests/runtime.test.mjs`: 14 tests pass. The new recovery cases
+  first failed against v1.0.4, then passed with the repair. They cover native
+  readiness, older-Zen fallback, alignment tolerance, preference gates, hidden/
+  focused controls and unload before readiness or paint.
+- In an isolated Sine profile on Zen `1.23.3b` / Gecko `158.0`, the final source
+  passed the native test in `tests/native/startup-anchor.js`: the temporary rule
+  computed a real zero-height button frame, the attribute was cleaned up,
+  final placement error was zero, and all 51 tab identities, three folder
+  states and checked preferences were preserved. Both runtime owners remained
+  present, with no duplicate sizing style.
+- That native test injects a measured-boundary error to exercise recovery
+  deterministically. Natural cold starts in the isolated profile were already
+  aligned; the natural startup failure was captured in the normal profile.
+  These are separate evidence sources.
+- No hover, pressed, focus, command or animation declarations changed.
+- JavaScript syntax and Git whitespace checks pass.
+
+Publishing is separate from receiving the update through Sine. The final
+candidate has not been persistently installed or restarted in the normal
+profile by this test. Confirm the next ordinary restart after updating to
+`1.0.5`; the current-window frame-reconstruction recovery was verified live.
+The top-placement requirement and the limitations below remain applicable.
+
+## Previous candidate: version 1.0.4
 
 ### Tall pinned-folder repair (2026-09-27)
 

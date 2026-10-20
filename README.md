@@ -10,7 +10,7 @@ states.
 > **Move New Tab button to top** setting is enabled. Bottom placement is not
 > currently supported.
 >
-> Version 1.0.4 also requires Sine to load the included JavaScript module.
+> The mod also requires Sine to load the included JavaScript module.
 > For a repository install, see the JavaScript permission step below.
 
 <p align="center">
@@ -30,6 +30,8 @@ states.
   pinned folders would otherwise crowd out ordinary tabs.
 - Reserves a minimum ordinary-tab viewport of two native row pitches and
   reveals selected/focused tabs when navigating with the keyboard.
+- Checks its position after Zen restores the session and corrects a stale
+  startup position automatically, without requiring a mod toggle.
 - Restores upstream scrolling and the original inner button when sticky mode is
   disabled.
 - Retains the upstream New Tab, tab, and folder corner-radius preferences.
@@ -63,6 +65,13 @@ unloading removes its style and releases its input listeners. CSS alone is not
 the complete tall-folder repair; if the module cannot load, disable sticky mode.
 
 ## Compatibility and known limitations
+
+Version `1.0.5` adds recovery for the New Tab button starting above restored
+folders. After Zen's startup completes, it checks the actual tab-section
+boundary and reconstructs only the button's layout if it is more than one CSS
+pixel out of place. It leaves an aligned button or a focused button alone.
+The repair was exercised in Zen `1.23.3b` (Gecko `158.0`) through Sine. See the
+verification record for the observed live failure, recovery and test limits.
 
 Version `1.0.4` repairs ordinary tabs becoming unreachable below tall expanded
 pinned folders. The repair was tested on Zen `1.22.3b` (Gecko `156.0.1`) with

@@ -10,7 +10,8 @@ const ownerKey = '__evenBetterNewTabSlotSizing';
 const sharedKey = '__zenSectionScrollRepair';
 const query = '(-moz-pref("zen.tabs.vertical")) and (-moz-pref("btrnewtab.sticky")) and (-moz-pref("zen.view.show-newtab-button-top"))';
 
-function fixture({ sine = true } = {}) {
+function fixture({ sine = true, startupPromise = Promise.resolve(), legacyStartup = false,
+  buttonTop = 100, normalTop = 258, buttonHeight = 36, marginEnd = '2px' } = {}) {
   const styles = new Set(), listeners = new Map(), frames = new Map(), unloads = [];
   const prefs = new Map(['zen.tabs.vertical', 'btrnewtab.sticky',
     'zen.view.show-newtab-button-top'].map(p => [p, true]));
@@ -27,7 +28,29 @@ function fixture({ sine = true } = {}) {
     removeEventListener(name, fn) { listeners.get(name)?.delete(fn); },
   };
   if (sine) window.addUnloadListener = fn => unloads.push(fn);
+  if (legacyStartup) window.gZenWorkspaces = { promiseInitialized: startupPromise };
+  else window.gZenStartup = { promiseInitialized: startupPromise };
+  const frameAttribute = 'btrnewtab-rebuild-frame';
+  const buttonAttributes = new Map(), layoutCalls = [];
+  const button = {
+    hasAttribute(name) { return buttonAttributes.has(name); },
+    setAttribute(name, value) { buttonAttributes.set(name, value); layoutCalls.push(['set', name]); },
+    removeAttribute(name) { buttonAttributes.delete(name); layoutCalls.push(['remove', name]); },
+    getBoundingClientRect() {
+      if (buttonAttributes.has(frameAttribute)) layoutCalls.push(['measure-hidden']);
+      return { top: buttonTop, height: buttonAttributes.has(frameAttribute) ? 0 : buttonHeight };
+    },
+  };
+  const normal = { getBoundingClientRect() { return { top: normalTop, height: 300 }; } };
   const document = {
+    activeElement: null,
+    getElementById(id) {
+      assert.equal(id, 'vertical-tabs-newtab-button'); return button;
+    },
+    querySelector(selector) {
+      assert.equal(selector, '#tabbrowser-arrowscrollbox > zen-workspace[active="true"] .zen-workspace-normal-tabs-section');
+      return normal;
+    },
     createElementNS(ns, tag) {
       assert.equal(ns, 'http://www.w3.org/1999/xhtml');
       assert.equal(tag, 'style');
@@ -38,11 +61,15 @@ function fixture({ sine = true } = {}) {
   };
   const gBrowser = { selectedTab: null };
   const context = vm.createContext({ window, document, gBrowser,
+    getComputedStyle(element) {
+      assert.equal(element, button);
+      return { position: 'absolute', positionAnchor: '--btrnewtab-active-normal', marginBlockEnd: marginEnd };
+    },
     requestAnimationFrame(fn) { frames.set(++frameId, fn); return frameId; },
     cancelAnimationFrame(id) { frames.delete(id); },
   });
   return {
-    window, styles, listeners, frames, prefs, gBrowser, unloads,
+    window, document, styles, listeners, frames, prefs, gBrowser, unloads, button, layoutCalls,
     load() { vm.runInContext(source, context); },
     fire(type, extra = {}) {
       for (const fn of [...(listeners.get(type) ?? [])]) fn({ type, ...extra });
@@ -97,6 +124,56 @@ test('load and repeated load leave one author style and one set of listeners', (
   assert.equal(f.listenerCount(), 0);
   assert.equal(f.window[sharedKey], undefined);
   assert.equal(f.window[ownerKey], undefined);
+});
+
+async function paintStartup(f) {
+  await Promise.resolve(); f.step(); f.step();
+}
+
+test('startup repairs a stale button frame only after native restoration completes', async () => {
+  const ready = Promise.withResolvers();
+  const f = fixture({ startupPromise: ready.promise }); f.load();
+  await paintStartup(f); assert.deepEqual(f.layoutCalls, []);
+  ready.resolve(); await paintStartup(f);
+  assert.deepEqual(f.layoutCalls, [
+    ['set', 'btrnewtab-rebuild-frame'], ['measure-hidden'], ['remove', 'btrnewtab-rebuild-frame'],
+  ]);
+  assert.equal(f.button.hasAttribute('btrnewtab-rebuild-frame'), false);
+});
+
+test('startup leaves an already aligned button, including subpixel rounding, alone', async () => {
+  for (const buttonTop of [220, 220.75]) {
+    const f = fixture({ buttonTop }); f.load(); await paintStartup(f);
+    assert.deepEqual(f.layoutCalls, []);
+  }
+});
+
+test('startup recovery respects preference gates, hidden buttons and keyboard focus', async () => {
+  for (const pref of ['zen.tabs.vertical', 'btrnewtab.sticky', 'zen.view.show-newtab-button-top']) {
+    const f = fixture(); f.prefs.set(pref, false); f.load(); await paintStartup(f);
+    assert.deepEqual(f.layoutCalls, []);
+  }
+  const hidden = fixture({ buttonHeight: 0 }); hidden.load(); await paintStartup(hidden);
+  assert.deepEqual(hidden.layoutCalls, []);
+  const focused = fixture(); focused.document.activeElement = focused.button;
+  focused.load(); await paintStartup(focused); assert.deepEqual(focused.layoutCalls, []);
+});
+
+test('unloading before native readiness or before the paint cancels startup recovery', async () => {
+  const ready = Promise.withResolvers(); const early = fixture({ startupPromise: ready.promise });
+  early.load(); early.unloads[0](); ready.resolve(); await paintStartup(early);
+  assert.deepEqual(early.layoutCalls, []); assert.equal(early.frames.size, 0);
+  const scheduled = fixture(); scheduled.load(); await Promise.resolve();
+  scheduled.unloads[0](); scheduled.step(); scheduled.step();
+  assert.deepEqual(scheduled.layoutCalls, []); assert.equal(scheduled.frames.size, 0);
+});
+
+test('older Zen startup waits on the workspace restoration promise', async () => {
+  const ready = Promise.withResolvers();
+  const f = fixture({ legacyStartup: true, startupPromise: ready.promise });
+  f.load(); await paintStartup(f); assert.deepEqual(f.layoutCalls, []);
+  ready.resolve(); await paintStartup(f);
+  assert.equal(f.layoutCalls.filter(call => call[0] === 'measure-hidden').length, 1);
 });
 
 test('native window unload cleans up when no Sine unload API is present', () => {

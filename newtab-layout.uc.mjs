@@ -13,16 +13,54 @@
     arrowscrollbox.workspace-arrowscrollbox::part(items-wrapper) { min-height: 0 !important; }
   }`;
   document.documentElement.appendChild(style);
-  let release;
+  let release, startupFrame = 0, alive = true;
   const owner = { destroy() {
+    alive = false;
+    cancelAnimationFrame(startupFrame);
     release?.(); style.remove();
     window.removeEventListener('unload', owner.destroy);
     if (window[key] === owner) delete window[key];
   }};
   window[key] = owner;
-  release = acquireSectionScrolling(owner, window.matchMedia(query));
+  const media = window.matchMedia(query);
+  release = acquireSectionScrolling(owner, media);
   if (typeof window.addUnloadListener === 'function') window.addUnloadListener(owner.destroy);
   else window.addEventListener('unload', owner.destroy, {once: true});
+
+  // Gecko can retain the anchor's pre-restoration coordinates even after the
+  // pinned section has grown. Reconstruct only this button's frame if its
+  // rendered position is still wrong after native startup and layout settle.
+  const ready = window.gZenStartup?.promiseInitialized
+    ?? window.gZenWorkspaces?.promiseInitialized ?? Promise.resolve();
+  ready.then(() => {
+    if (!alive) return;
+    startupFrame = requestAnimationFrame(() => {
+      startupFrame = requestAnimationFrame(repairStartupAnchor);
+    });
+  }, () => {});
+
+  function repairStartupAnchor() {
+    startupFrame = 0;
+    if (!alive || !media.matches) return;
+    const button = document.getElementById('vertical-tabs-newtab-button');
+    const normal = document.querySelector('#tabbrowser-arrowscrollbox > zen-workspace[active="true"] .zen-workspace-normal-tabs-section');
+    if (!button || !normal || document.activeElement === button) return;
+    const style = getComputedStyle(button);
+    if (style.position !== 'absolute' || style.positionAnchor !== '--btrnewtab-active-normal') return;
+    const b = button.getBoundingClientRect(), n = normal.getBoundingClientRect();
+    const margin = parseFloat(style.marginBlockEnd);
+    const expectedTop = n.top - b.height - margin;
+    if (!b.height || !n.height || !Number.isFinite(expectedTop)
+        || Math.abs(b.top - expectedTop) <= 1) return;
+    const attribute = 'btrnewtab-rebuild-frame';
+    if (button.hasAttribute(attribute)) return;
+    try {
+      button.setAttribute(attribute, '');
+      button.getBoundingClientRect(); // Flush removal before restoring the frame.
+    } finally {
+      button.removeAttribute(attribute);
+    }
+  }
 // Both mods share one set of listeners; unloading either keeps the other alive.
 // The native selection reveal is gated on the outer scroller overflowing, which
 // is false once these mods use section scrollers. No keyboard/drop handlers are
