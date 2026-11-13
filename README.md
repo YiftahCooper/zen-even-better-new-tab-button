@@ -66,6 +66,14 @@ the complete tall-folder repair; if the module cannot load, disable sticky mode.
 
 ## Compatibility and known limitations
 
+Version `1.0.6` makes dragging tabs upward scroll the ordinary tab list. Holding
+dragged tabs in the top 48 pixels of the list, or over the New Tab row just
+above it, scrolls the list up (faster nearer the edge); the bottom strip scrolls
+down. Before, the pointer reached the pinned/folder area and the list stayed
+still. Dropping is still Zen's own. SuperPins `1.7.4` ships the same shared
+code, and whichever newer copy loads takes over an older one, so updating
+either mod first is fine.
+
 Version `1.0.5` adds recovery for the New Tab button starting above restored
 folders. After Zen's startup completes, it checks the actual tab-section
 boundary and reconstructs only the button's layout if it is more than one CSS

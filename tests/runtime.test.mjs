@@ -271,3 +271,70 @@ test('shared owner protocol keeps a peer alive in either unload order', () => {
     assert.equal(f.listenerCount(), 0); assert.equal(f.window[sharedKey], undefined);
   }
 });
+
+// Version 2: the ordinary list also scrolls while dragging at its edges, and a
+// drag just above it (the New Tab row) scrolls it up, so tabs can move upwards.
+function normalDrag(f, { scrollTop = 400 } = {}) {
+  const normal = f.document.querySelector('#tabbrowser-arrowscrollbox > zen-workspace[active="true"] .zen-workspace-normal-tabs-section');
+  Object.assign(normal, {
+    isConnected: true, scrollHeight: 4000, clientHeight: 300, scrollTop,
+    getBoundingClientRect() { return { left: 0, right: 200, top: 258, bottom: 558, height: 300 }; },
+  });
+  const inside = { closest(selector) {
+    return selector.includes('normal-tabs-section') ? normal : null;
+  } };
+  const above = { closest: () => null };
+  const event = y => ({ target: y < 258 ? above : inside, clientX: 50, clientY: y,
+    dataTransfer: { types: ['application/x-moz-tabbrowser-tab'] } });
+  return { normal, event };
+}
+
+test('ordinary list scrolls up at its top strip, faster nearer the edge, and down at its bottom', () => {
+  const f = fixture(); f.load(); const { normal, event } = normalDrag(f);
+  f.fire('dragover', event(300)); f.step();          // 6 px into a 48 px strip: slow
+  const slow = 400 - normal.scrollTop;
+  normal.scrollTop = 400;
+  f.fire('dragover', event(259)); f.step(32);        // at the edge: fast
+  const fast = 400 - normal.scrollTop;
+  assert.ok(slow > 0 && fast > slow * 4, `slow ${slow}, fast ${fast}`);
+  f.fire('dragover', event(400)); assert.equal(f.frames.size, 0);   // middle: no scroll
+  normal.scrollTop = 400; f.fire('dragover', event(556)); f.step(48);
+  assert.ok(normal.scrollTop > 400);
+});
+
+test('the New Tab row above the list scrolls it up at full speed and stops at the top', () => {
+  const f = fixture(); f.load(); const { normal, event } = normalDrag(f, { scrollTop: 30 });
+  f.fire('dragover', event(240)); f.step(); assert.ok(normal.scrollTop < 30);
+  for (let t = 32; t < 200 && f.frames.size; t += 16) { normal.scrollTop = Math.max(0, normal.scrollTop); f.step(t); }
+  normal.scrollTop = Math.max(0, normal.scrollTop); f.step(300);
+  assert.equal(f.frames.size, 0);                     // nothing left to scroll
+  f.fire('dragover', event(240)); assert.equal(f.frames.size, 0);
+  f.fire('dragover', event(150)); assert.equal(f.frames.size, 0);  // far above: not the strip
+});
+
+test('a version 2 copy takes over an older shared copy and keeps both owners working', () => {
+  const f = fixture();
+  const oldListeners = [], oldOwners = new Map([[{}, { matches: true }]]);
+  const old = { owners: oldOwners, release(owner) {
+    oldOwners.delete(owner);
+    if (!oldOwners.size) { oldListeners.length = 0; if (f.window[sharedKey] === old) delete f.window[sharedKey]; }
+  } };
+  oldListeners.push('dragover');
+  f.window[sharedKey] = old;
+  const [oldOwner] = [...oldOwners.keys()];
+  f.load();
+  const shared = f.window[sharedKey];
+  assert.notEqual(shared, old); assert.equal(shared.version, 2);
+  assert.equal(oldListeners.length, 0);                // older listeners retired
+  assert.equal(shared.owners.size, 2);
+  old.release(oldOwner);                                // older mod unloads via its old handle
+  assert.equal(shared.owners.size, 1); assert.equal(f.listenerCount(), 8);
+  f.unloads[0]();
+  assert.equal(f.listenerCount(), 0); assert.equal(f.window[sharedKey], undefined);
+});
+
+test('a second version 2 copy joins instead of replacing', () => {
+  const f = fixture(); f.load(); const shared = f.window[sharedKey];
+  const peer = {}; shared.owners.set(peer, { matches: true });
+  f.load(); assert.equal(f.window[sharedKey], shared);
+});

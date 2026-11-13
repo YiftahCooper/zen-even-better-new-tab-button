@@ -1,6 +1,27 @@
 # Verification record
 
-## Current candidate: version 1.0.5
+## Current candidate: version 1.0.6
+
+### Drag edge-scrolling for the ordinary list (2026-11-13)
+
+Disposable headless Zen `1.24.1b` (Gecko `159.0.1`) with the pinned Sine
+fixture, 80 tabs, ordinary list 582 px tall and scrolled to 1500 px. Synthetic
+`dragover` events were sent every 50 ms for 600 ms at each point; the table is
+how far the list scrolled up.
+
+| Mods loaded | Middle | Top edge | 40 px in | New Tab row above |
+| --- | --- | --- | --- | --- |
+| NTB 1.0.5 + SuperPins 1.7.3 (published) | 0 | 0 | 0 | 0 |
+| NTB 1.0.6 + SuperPins 1.7.4 | 0 | 922 | 176 | 992 |
+| NTB 1.0.6 + SuperPins 1.7.3 | 0 | 929 | 176 | 970 |
+| NTB 1.0.5 + SuperPins 1.7.4 | 0 | 918 | 174 | 985 |
+
+In the mixed rows the shared object reported version 2 with both owners, so
+the newer copy took over. Unit tests cover the slow/fast strips, stopping at
+the top, the takeover and unload forwarding. Not proven: the feel of a real
+mouse drag in an everyday profile.
+
+## Version 1.0.5
 
 ### Startup anchor recovery (2026-10-20)
 

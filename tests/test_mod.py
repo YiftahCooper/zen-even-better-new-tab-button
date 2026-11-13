@@ -465,7 +465,7 @@ class MetadataContractTests(unittest.TestCase):
         self.assertEqual(theme["id"], "7f126d94-71d0-4c21-9de6-64f933edf185")
         self.assertNotEqual(theme["id"], "bada16c1-3b14-483b")
         self.assertEqual(theme["name"], "Even Better New Tab Button")
-        self.assertEqual(theme["version"], "1.0.5")
+        self.assertEqual(theme["version"], "1.0.6")
         self.assertEqual(
             theme["homepage"],
             "https://github.com/YiftahCooper/zen-even-better-new-tab-button",
